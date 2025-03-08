@@ -1,0 +1,18 @@
+version: '3.11'
+
+services:
+  api:
+    build: ../Telegram Desktop/flask_api
+    ports:
+      - "5050:5050"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+    depends_on:
+      - db
+  db:
+    image: esolang/sqlite3
+    restart: always
+    # environment:
+      # login, password, db_name
