@@ -16,23 +16,30 @@ def find_iphone(message):
     conn = sqlite3.connect('../settings/stores.db')
     cursor = conn.cursor()
 
-    stores = ['comfy', 'foxtrot', 'moyo']  # Додай інші магазини, якщо треба
+    stores = ["rozetka", "ctrs", "foxtrot", "moyo", "comfy"]
     results = []
 
     for store in stores:
-        cursor.execute(f"SELECT product_name, price, url FROM {store} WHERE product_name LIKE ?", (f"%{iphone_name}%",))
-        data = cursor.fetchall()
+        cursor.execute(f"""
+            SELECT id, product_name, price, url, date 
+            FROM {store} 
+            WHERE product_name LIKE ? 
+            ORDER BY date DESC 
+            LIMIT 1
+        """, (f"%{iphone_name}%",))
+        data = cursor.fetchone()  # Беремо тільки один найновіший запис
+
         if data:
-            for row in data:
-                product_name, price, url = row
-                results.append((product_name, price, store, url))
+            id, product_name, price, url, date = data
+            results.append((store, product_name, price, url, date))
 
     conn.close()
 
     if results:
-        results.sort(key=lambda x: x[1])  # Сортуємо за ціною
+        results.sort(key=lambda x: x[2])  # Сортуємо за ціною
         response = "Ось що я знайшов:\n\n"
-        for product_name, price, store, url in results:
+
+        for store, product_name, price, url, date in results:
             response += (
                 f"📍 Магазин: {store}\n"
                 f"📱 {product_name}\n"
@@ -40,8 +47,8 @@ def find_iphone(message):
                 f"🛒 Посилання: {url}\n\n"
             )
 
-        best = results[0]
-        response += f"✅ Найдешевше в {best[2]} за {best[1]} грн!\n🛒 Посилання: {best[3]}"
+        best = results[0]  # Найдешевший варіант
+        response += f"✅ Найдешевше в {best[0]} за {best[2]} грн!\n🛒 Посилання: {best[3]}"
 
     else:
         response = "❌ Вибач, але я не знайшов цей iPhone у магазинах. Спробуй ще раз!"
